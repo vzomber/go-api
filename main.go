@@ -19,18 +19,22 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := fmt.Fprintf(w, "Hello, World!")
+
+	if err != nil {
+		fmt.Println("Error writing response:", err)
+	}
+}
+
 func main() {
+	mux := http.NewServeMux()
 
-	http.HandleFunc("/healthz", healthHandler)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		_, err := fmt.Fprintf(w, "Hello, World!")
+	mux.HandleFunc("GET /tasks", tasksHandler)
+	mux.HandleFunc("GET /health", healthHandler)
+	mux.HandleFunc("/", rootHandler)
 
-		if err != nil {
-			fmt.Println("Error writing response:", err)
-		}
-	})
-
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
 		fmt.Println("Server error:", err)
 	}
