@@ -18,6 +18,11 @@ type Task struct {
 	Done  bool   `json:"done"`
 }
 
+type UpdateTaskRequest struct {
+	Title *string `json:"title"`
+	Done  *bool   `json:"done"`
+}
+
 func createTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -39,6 +44,47 @@ func createTaskHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to encode task", http.StatusInternalServerError)
 		return
 	}
+}
+
+func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var updateRequest UpdateTaskRequest
+
+	err := json.NewDecoder(r.Body).Decode(&updateRequest)
+	if err != nil {
+		http.Error(w, "Invalid task data", http.StatusBadRequest)
+		return
+	}
+
+	id := r.PathValue("id")
+	requestedTaskID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
+	for i, task := range tasks {
+		if task.ID == requestedTaskID {
+
+			if updateRequest.Done != nil {
+				tasks[i].Done = *updateRequest.Done
+			}
+
+			if updateRequest.Title != nil {
+				tasks[i].Title = *updateRequest.Title
+			}
+
+			err := json.NewEncoder(w).Encode(tasks[i])
+			if err != nil {
+				http.Error(w, "Cannot encode task", http.StatusInternalServerError)
+				fmt.Println("failed to encode task:", err)
+			}
+			return
+		}
+	}
+
+	http.Error(w, "Task not found", http.StatusNotFound)
 }
 
 func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
