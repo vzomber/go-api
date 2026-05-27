@@ -30,6 +30,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("DELETE /tasks/{id}", deleteTaskHandler)
 	mux.HandleFunc("GET /tasks/{id}", getTaskHandler)
 	mux.HandleFunc("POST /tasks", createTaskHandler)
 	mux.HandleFunc("GET /tasks", getTasksHandler)

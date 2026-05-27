@@ -41,6 +41,27 @@ func createTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	requestedTaskID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
+	for i, task := range tasks {
+		if task.ID == requestedTaskID {
+
+			tasks = append(tasks[:i], tasks[i+1:]...)
+			w.WriteHeader(http.StatusNoContent)
+
+			return
+		}
+	}
+
+	http.Error(w, "Task not found", http.StatusNotFound)
+}
+
 func getTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
