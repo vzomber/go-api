@@ -30,7 +30,8 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /tasks", tasksHandler)
+	mux.HandleFunc("POST /tasks", createTaskHandler)
+	mux.HandleFunc("GET /tasks", getTasksHandler)
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("/", rootHandler)
 
