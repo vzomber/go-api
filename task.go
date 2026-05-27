@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 )
 
 var tasks = []Task{
@@ -37,6 +39,30 @@ func createTaskHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to encode task", http.StatusInternalServerError)
 		return
 	}
+}
+
+func getTaskHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id := r.PathValue("id")
+	requestedTaskID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
+	for _, task := range tasks {
+		if task.ID == requestedTaskID {
+			err := json.NewEncoder(w).Encode(task)
+			if err != nil {
+				http.Error(w, "Cannot encode task", http.StatusInternalServerError)
+				fmt.Println("failed to encode task:", err)
+			}
+			return
+		}
+	}
+
+	http.Error(w, "Task not found", http.StatusNotFound)
 }
 
 func getTasksHandler(w http.ResponseWriter, r *http.Request) {
