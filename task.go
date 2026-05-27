@@ -49,14 +49,6 @@ func createTaskHandler(w http.ResponseWriter, r *http.Request) {
 func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var updateRequest UpdateTaskRequest
-
-	err := json.NewDecoder(r.Body).Decode(&updateRequest)
-	if err != nil {
-		http.Error(w, "Invalid task data", http.StatusBadRequest)
-		return
-	}
-
 	id := r.PathValue("id")
 	requestedTaskID, err := strconv.Atoi(id)
 	if err != nil {
@@ -64,9 +56,21 @@ func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var updateRequest UpdateTaskRequest
+
+	err = json.NewDecoder(r.Body).Decode(&updateRequest)
+	if err != nil {
+		http.Error(w, "Invalid task data", http.StatusBadRequest)
+		return
+	}
+
+	if updateRequest.Done == nil && updateRequest.Title == nil {
+		http.Error(w, "No fields to update", http.StatusBadRequest)
+		return
+	}
+
 	for i, task := range tasks {
 		if task.ID == requestedTaskID {
-
 			if updateRequest.Done != nil {
 				tasks[i].Done = *updateRequest.Done
 			}
@@ -77,9 +81,11 @@ func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 			err := json.NewEncoder(w).Encode(tasks[i])
 			if err != nil {
-				http.Error(w, "Cannot encode task", http.StatusInternalServerError)
 				fmt.Println("failed to encode task:", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
 			}
+
 			return
 		}
 	}
@@ -122,7 +128,7 @@ func getTaskHandler(w http.ResponseWriter, r *http.Request) {
 		if task.ID == requestedTaskID {
 			err := json.NewEncoder(w).Encode(task)
 			if err != nil {
-				http.Error(w, "Cannot encode task", http.StatusInternalServerError)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
 				fmt.Println("failed to encode task:", err)
 			}
 			return
@@ -137,7 +143,7 @@ func getTasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewEncoder(w).Encode(tasks)
 	if err != nil {
-		http.Error(w, "Failed to encode tasks", http.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 }
