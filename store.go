@@ -1,0 +1,75 @@
+package main
+
+import (
+	"errors"
+	"sync"
+)
+
+type TaskStore struct {
+	tasks []Task
+	mu    sync.Mutex
+}
+
+func (s *TaskStore) Add(task Task) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.tasks = append(s.tasks, task)
+}
+
+func (s *TaskStore) GetAll() []Task {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	tasksCopy := make([]Task, len(s.tasks))
+	copy(tasksCopy, s.tasks)
+
+	return tasksCopy
+}
+
+func (s *TaskStore) GetByID(requestedTaskID int) (Task, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, task := range s.tasks {
+		if task.ID == requestedTaskID {
+			return task, nil
+		}
+	}
+	return Task{}, errors.New("task not found")
+}
+
+func (s *TaskStore) Delete(id int) (Task, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for i, task := range s.tasks {
+		if task.ID == id {
+			tasks = append(s.tasks[:i], s.tasks[i+1:]...)
+
+			return task, nil
+		}
+	}
+	return Task{}, errors.New("task not found")
+}
+
+func (s *TaskStore) Update(id int, updateTaskBody UpdateTaskRequest) (Task, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for i, task := range s.tasks {
+		if task.ID == id {
+
+			if updateTaskBody.Done != nil {
+				s.tasks[i].Done = *updateTaskBody.Done
+			}
+			if updateTaskBody.Title != nil {
+				s.tasks[i].Title = *updateTaskBody.Title
+			}
+
+			return s.tasks[i], nil
+		}
+	}
+
+	return Task{}, errors.New("task not found")
+}
