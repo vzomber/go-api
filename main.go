@@ -29,13 +29,17 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	mux := http.NewServeMux()
-	// store := &TaskStore{}
+	store := newTaskStore([]Task{
+		{ID: 1, Title: "Learn Go handlers", Done: false},
+		{ID: 2, Title: "Build task API", Done: false},
+	},
+	)
 
-	mux.HandleFunc("PATCH /tasks/{id}", updateTaskHandler)
-	mux.HandleFunc("DELETE /tasks/{id}", deleteTaskHandler)
-	mux.HandleFunc("GET /tasks/{id}", getTaskHandler)
-	mux.HandleFunc("POST /tasks", createTaskHandler)
-	mux.HandleFunc("GET /tasks", getTasksHandler)
+	mux.HandleFunc("PATCH /tasks/{id}", updateTaskHandler(store))
+	mux.HandleFunc("DELETE /tasks/{id}", deleteTaskHandler(store))
+	mux.HandleFunc("GET /tasks/{id}", getTaskHandler(store))
+	mux.HandleFunc("POST /tasks", createTaskHandler(store))
+	mux.HandleFunc("GET /tasks", getTasksHandler(store))
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("/", rootHandler)
 

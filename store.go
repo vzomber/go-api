@@ -6,15 +6,28 @@ import (
 )
 
 type TaskStore struct {
-	tasks []Task
-	mu    sync.Mutex
+	tasks  []Task
+	mu     sync.Mutex
+	nextID int
 }
 
-func (s *TaskStore) Add(task Task) {
+func newTaskStore(initialTasks []Task) *TaskStore {
+	return &TaskStore{
+		tasks:  initialTasks,
+		nextID: len(initialTasks) + 1,
+	}
+}
+
+func (s *TaskStore) Add(task Task) Task {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	task.ID = s.nextID
+	s.nextID++
+
 	s.tasks = append(s.tasks, task)
+
+	return task
 }
 
 func (s *TaskStore) GetAll() []Task {
@@ -45,7 +58,7 @@ func (s *TaskStore) Delete(id int) (Task, error) {
 
 	for i, task := range s.tasks {
 		if task.ID == id {
-			tasks = append(s.tasks[:i], s.tasks[i+1:]...)
+			s.tasks = append(s.tasks[:i], s.tasks[i+1:]...)
 
 			return task, nil
 		}
