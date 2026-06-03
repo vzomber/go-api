@@ -25,8 +25,9 @@ func (s *TaskStore) Add(task Task) Task {
 	defer s.mu.Unlock()
 
 	task.ID = s.nextID
-	s.nextID++
+	task.Done = false
 
+	s.nextID++
 	s.tasks = append(s.tasks, task)
 
 	return task

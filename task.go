@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type Task struct {
@@ -14,24 +15,56 @@ type Task struct {
 	Done  bool   `json:"done"`
 }
 
+type CreateTaskRequest struct {
+	Title string `json:"title"`
+}
+
 type UpdateTaskRequest struct {
 	Title *string `json:"title"`
 	Done  *bool   `json:"done"`
+}
+
+func (r CreateTaskRequest) Validate() error {
+	if strings.TrimSpace(r.Title) == "" {
+		return errors.New("title cannot be empty")
+	}
+
+	return nil
+}
+
+func (r UpdateTaskRequest) Validate() error {
+	if r.Title != nil && strings.TrimSpace(*r.Title) == "" {
+		return errors.New("title cannot be empty")
+	}
+	if r.Done == nil && r.Title == nil {
+		return errors.New("at least one field is required")
+	}
+	return nil
 }
 
 func createTaskHandler(store *TaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		var newTask Task
+		var request CreateTaskRequest
 
-		err := json.NewDecoder(r.Body).Decode(&newTask)
+		err := json.NewDecoder(r.Body).Decode(&request)
 		if err != nil {
 			http.Error(w, "Invalid task data", http.StatusBadRequest)
 			return
 		}
 
-		createdTask := store.Add(newTask)
+		err = request.Validate()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		task := Task{
+			Title: request.Title,
+		}
+
+		createdTask := store.Add(task)
 
 		w.WriteHeader(http.StatusCreated)
 		err = json.NewEncoder(w).Encode(createdTask)
@@ -59,6 +92,12 @@ func updateTaskHandler(store *TaskStore) http.HandlerFunc {
 		if err != nil {
 			log.Println("Invalid task data: ", err)
 			http.Error(w, "Invalid task data", http.StatusBadRequest)
+			return
+		}
+
+		err = updateRequest.Validate()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
