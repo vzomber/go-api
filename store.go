@@ -11,6 +11,8 @@ type TaskStore struct {
 	nextID int
 }
 
+var ErrTaskNotFound = errors.New("task not found")
+
 func newTaskStore(initialTasks []Task) *TaskStore {
 	return &TaskStore{
 		tasks:  initialTasks,
@@ -49,7 +51,7 @@ func (s *TaskStore) GetByID(requestedTaskID int) (Task, error) {
 			return task, nil
 		}
 	}
-	return Task{}, errors.New("task not found")
+	return Task{}, ErrTaskNotFound
 }
 
 func (s *TaskStore) Delete(id int) (Task, error) {
@@ -63,7 +65,7 @@ func (s *TaskStore) Delete(id int) (Task, error) {
 			return task, nil
 		}
 	}
-	return Task{}, errors.New("task not found")
+	return Task{}, ErrTaskNotFound
 }
 
 func (s *TaskStore) Update(id int, updateTaskBody UpdateTaskRequest) (Task, error) {
@@ -83,6 +85,5 @@ func (s *TaskStore) Update(id int, updateTaskBody UpdateTaskRequest) (Task, erro
 			return s.tasks[i], nil
 		}
 	}
-
-	return Task{}, errors.New("task not found")
+	return Task{}, ErrTaskNotFound
 }

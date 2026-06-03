@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -56,27 +57,33 @@ func updateTaskHandler(store *TaskStore) http.HandlerFunc {
 
 		err = json.NewDecoder(r.Body).Decode(&updateRequest)
 		if err != nil {
-			log.Println("Invalid task data:", err)
+			log.Println("Invalid task data: ", err)
 			http.Error(w, "Invalid task data", http.StatusBadRequest)
 			return
 		}
 
 		if updateRequest.Done == nil && updateRequest.Title == nil {
-			log.Println("No fields to update:")
+			log.Println("No fields to update")
 			http.Error(w, "No fields to update", http.StatusBadRequest)
 			return
 		}
 
 		task, err := store.Update(requestedTaskID, updateRequest)
 		if err != nil {
-			log.Println("Failed to update task:", err)
-			http.Error(w, "Task not found", http.StatusNotFound)
+			if errors.Is(err, ErrTaskNotFound) {
+				http.Error(w, "Task not found", http.StatusNotFound)
+				log.Printf("task %d not found", requestedTaskID)
+				return
+			}
+
+			http.Error(w, "Server error", http.StatusInternalServerError)
+			log.Println("Failed to delete task: ", err)
 			return
 		}
 
 		err = json.NewEncoder(w).Encode(task)
 		if err != nil {
-			log.Println("Failed to encode task:", err)
+			log.Println("Failed to encode task: ", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -94,8 +101,14 @@ func deleteTaskHandler(store *TaskStore) http.HandlerFunc {
 
 		task, err := store.Delete(requestedTaskID)
 		if err != nil {
-			http.Error(w, "Task not found", http.StatusNotFound)
-			log.Println("Failed to delete task:", err)
+			if errors.Is(err, ErrTaskNotFound) {
+				http.Error(w, "Task not found", http.StatusNotFound)
+				log.Printf("task %d not found", requestedTaskID)
+				return
+			}
+
+			http.Error(w, "Server error", http.StatusInternalServerError)
+			log.Println("Failed to delete task: ", err)
 			return
 		}
 
@@ -122,15 +135,21 @@ func getTaskHandler(store *TaskStore) http.HandlerFunc {
 
 		task, err := store.GetByID(requestedTaskID)
 		if err != nil {
-			http.Error(w, "Task not found", http.StatusNotFound)
-			log.Println("Failed to get task by ID:", err)
+			if errors.Is(err, ErrTaskNotFound) {
+				http.Error(w, "Task not found", http.StatusNotFound)
+				log.Printf("task %d not found", requestedTaskID)
+				return
+			}
+
+			http.Error(w, "Server error", http.StatusInternalServerError)
+			log.Println("Failed to delete task: ", err)
 			return
 		}
 
 		err = json.NewEncoder(w).Encode(task)
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			log.Println("failed to encode task:", err)
+			log.Println("failed to encode task: ", err)
 			return
 		}
 	}
