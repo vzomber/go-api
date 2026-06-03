@@ -13,7 +13,7 @@ type TaskStore struct {
 
 var ErrTaskNotFound = errors.New("task not found")
 
-func newTaskStore(initialTasks []Task) *TaskStore {
+func NewTaskStore(initialTasks []Task) *TaskStore {
 	return &TaskStore{
 		tasks:  initialTasks,
 		nextID: len(initialTasks) + 1,
