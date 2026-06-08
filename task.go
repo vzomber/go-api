@@ -60,11 +60,7 @@ func createTaskHandler(store *TaskStore) http.HandlerFunc {
 			return
 		}
 
-		task := Task{
-			Title: request.Title,
-		}
-
-		createdTask := store.Add(task)
+		createdTask := store.Add(request.Title)
 
 		w.WriteHeader(http.StatusCreated)
 		err = json.NewEncoder(w).Encode(createdTask)

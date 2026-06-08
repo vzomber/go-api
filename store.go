@@ -20,12 +20,15 @@ func NewTaskStore(initialTasks []Task) *TaskStore {
 	}
 }
 
-func (s *TaskStore) Add(task Task) Task {
+func (s *TaskStore) Add(title string) Task {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	task.ID = s.nextID
-	task.Done = false
+	task := Task{
+		Title: title,
+		ID:    s.nextID,
+		Done:  false,
+	}
 
 	s.nextID++
 	s.tasks = append(s.tasks, task)
