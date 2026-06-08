@@ -141,6 +141,43 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
+func TestDelete(t *testing.T) {
+	t.Run("returns deleted task", func(t *testing.T) {
+		store := NewTaskStore([]Task{
+			{ID: 1, Title: "First task", Done: false},
+			{ID: 2, Title: "Second task", Done: true},
+		})
+
+		task, err := store.Delete(1)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if task.ID != 1 {
+			t.Fatalf("expected ID 1, got %d", task.ID)
+		}
+
+		tasks := store.GetAll()
+		if len(tasks) != 1 {
+			t.Fatalf("expected 1 task remaining, got %d", len(tasks))
+		}
+		if tasks[0].ID != 2 {
+			t.Fatalf("expected remaining task ID 2, got %d", tasks[0].ID)
+		}
+	})
+
+	t.Run("returns ErrTaskNotFound when task does not exist", func(t *testing.T) {
+		store := NewTaskStore([]Task{
+			{ID: 1, Title: "First task", Done: false},
+			{ID: 2, Title: "Second task", Done: true},
+		})
+
+		_, err := store.Delete(99)
+		if !errors.Is(err, ErrTaskNotFound) {
+			t.Fatalf("expected ErrTaskNotFound, got %v", err)
+		}
+	})
+}
+
 func TestTaskStoreFlow(t *testing.T) {
 	t.Run("can add, delete and get tasts", func(t *testing.T) {
 		store := NewTaskStore([]Task{
