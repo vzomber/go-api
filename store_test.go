@@ -82,6 +82,65 @@ func TestGetByID(t *testing.T) {
 	})
 }
 
+func TestUpdate(t *testing.T) {
+	t.Run("updates Title", func(t *testing.T) {
+		store := NewTaskStore([]Task{
+			{ID: 1, Title: "First task", Done: false},
+			{ID: 2, Title: "Second task", Done: true},
+		})
+
+		title := "Third task"
+
+		task, err := store.Update(1, UpdateTaskRequest{Title: &title})
+		if err != nil {
+			t.Fatalf("expected no error, but got %v", err)
+		}
+		if task.Title != "Third task" {
+			t.Fatalf("expected title %q, got %q", "Third task", task.Title)
+		}
+		if task.Done != false {
+			t.Fatalf("expected Done to remain false")
+		}
+	})
+
+	t.Run("updates Done", func(t *testing.T) {
+		store := NewTaskStore([]Task{
+			{ID: 1, Title: "First task", Done: false},
+			{ID: 2, Title: "Second task", Done: true},
+		})
+
+		done := true
+
+		task, err := store.Update(1, UpdateTaskRequest{
+			Done: &done,
+		})
+		if err != nil {
+			t.Fatalf("expected no error, but got %v", err)
+		}
+		if task.Done != true {
+			t.Fatalf("expected Done to be true")
+		}
+		if task.Title != "First task" {
+			t.Fatalf("expected title to remain unchanged")
+		}
+	})
+
+	t.Run("returns ErrTaskNotFound when task does not exist", func(t *testing.T) {
+		store := NewTaskStore([]Task{
+			{ID: 1, Title: "First task", Done: false},
+			{ID: 2, Title: "Second task", Done: true},
+		})
+
+		_, err := store.Update(99, UpdateTaskRequest{})
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !errors.Is(err, ErrTaskNotFound) {
+			t.Fatalf("expected ErrTaskNotFound, got %v", err)
+		}
+	})
+}
+
 func TestTaskStoreFlow(t *testing.T) {
 	t.Run("can add, delete and get tasts", func(t *testing.T) {
 		store := NewTaskStore([]Task{
