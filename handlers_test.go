@@ -46,6 +46,55 @@ func TestCreateTaskHandler(t *testing.T) {
 			t.Fatalf("expected 1 task, got %d", len(tasks))
 		}
 	})
+	t.Run("returns 400 for invalid json", func(t *testing.T) {
+		store := NewTaskStore([]Task{})
+
+		rr := httptest.NewRecorder()
+		body := `{"title":New task}`
+		req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body))
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("POST /tasks", createTaskHandler(store))
+		mux.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400, got %d", rr.Code)
+		}
+
+		if rr.Body.String() != "Invalid task data\n" {
+			t.Fatalf("unexpected response body: %q", rr.Body.String())
+		}
+
+		tasks := store.GetAll()
+		if len(tasks) != 0 {
+			t.Fatalf("expected 0 tasks, got %d", len(tasks))
+		}
+	})
+
+	t.Run("returns 400 for invalid task data", func(t *testing.T) {
+		store := NewTaskStore([]Task{})
+
+		rr := httptest.NewRecorder()
+		body := `{}`
+		req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body))
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("POST /tasks", createTaskHandler(store))
+		mux.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400, got %d", rr.Code)
+		}
+
+		if rr.Body.String() != "title cannot be empty\n" {
+			t.Fatalf("unexpected response body: %q", rr.Body.String())
+		}
+
+		tasks := store.GetAll()
+		if len(tasks) != 0 {
+			t.Fatalf("expected 0 tasks, got %d", len(tasks))
+		}
+	})
 }
 
 func TestGetTaskHandler(t *testing.T) {
