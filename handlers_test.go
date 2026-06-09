@@ -4,8 +4,49 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
+
+func TestCreateTaskHandler(t *testing.T) {
+	t.Run("creates task", func(t *testing.T) {
+		store := NewTaskStore([]Task{})
+
+		rr := httptest.NewRecorder()
+		body := `{"title":"Learn Js"}`
+		req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body))
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("POST /tasks", createTaskHandler(store))
+		mux.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusCreated {
+			t.Fatalf("expected status 201, got %d", rr.Code)
+		}
+
+		var task Task
+
+		err := json.NewDecoder(rr.Body).Decode(&task)
+		if err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if rr.Header().Get("Content-Type") != "application/json" {
+			t.Fatalf("expected application/json")
+		}
+		if task.ID == 0 {
+			t.Fatal("expected non-zero ID")
+		}
+		if task.Title != "Learn Js" {
+			t.Fatalf("expected title Learn Js, got %q", task.Title)
+		}
+
+		tasks := store.GetAll()
+
+		if len(tasks) != 1 {
+			t.Fatalf("expected 1 task, got %d", len(tasks))
+		}
+	})
+}
 
 func TestGetTaskHandler(t *testing.T) {
 	t.Run("returns task", func(t *testing.T) {
