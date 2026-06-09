@@ -8,6 +8,44 @@ import (
 	"testing"
 )
 
+func TestDeleteTaskHandler(t *testing.T) {
+	t.Run("deletes task", func(t *testing.T) {
+		store := NewTaskStore([]Task{
+			{ID: 1, Title: "First task", Done: false},
+		})
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodDelete, "/tasks/1", nil)
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("DELETE /tasks/{id}", deleteTaskHandler(store))
+		mux.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d", rr.Code)
+		}
+
+		tasks := store.GetAll()
+		if len(tasks) != 0 {
+			t.Fatalf("expected 0 tasks, got %d", len(tasks))
+		}
+	})
+	t.Run("returns 404 when task not found", func(t *testing.T) {
+		store := NewTaskStore([]Task{})
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodDelete, "/tasks/99", nil)
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("DELETE /tasks/{id}", deleteTaskHandler(store))
+		mux.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusNotFound {
+			t.Fatalf("expected 404, got %d", rr.Code)
+		}
+	})
+}
+
 func TestUpdateTaskHandler(t *testing.T) {
 	t.Run("updates task title", func(t *testing.T) {
 		store := NewTaskStore([]Task{
