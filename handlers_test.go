@@ -8,6 +8,105 @@ import (
 	"testing"
 )
 
+func TestUpdateTaskHandler(t *testing.T) {
+	t.Run("updates task title", func(t *testing.T) {
+		store := NewTaskStore([]Task{
+			{ID: 1, Title: "Old title", Done: false},
+		})
+
+		rr := httptest.NewRecorder()
+		body := `{"title":"New title"}`
+		req := httptest.NewRequest(http.MethodPatch, "/tasks/1", strings.NewReader(body))
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("PATCH /tasks/{id}", updateTaskHandler(store))
+		mux.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d", rr.Code)
+		}
+
+		var task Task
+
+		err := json.NewDecoder(rr.Body).Decode(&task)
+		if err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		if task.Title != "New title" {
+			t.Fatalf("expected title New title, got %q", task.Title)
+		}
+
+		if task.Done != false {
+			t.Fatalf("expected done false, got %v", task.Done)
+		}
+	})
+
+	t.Run("updates task", func(t *testing.T) {
+		store := NewTaskStore([]Task{
+			{ID: 1, Title: "Old title", Done: false},
+		})
+
+		rr := httptest.NewRecorder()
+		body := `{"title":"New title"}`
+		req := httptest.NewRequest(http.MethodPatch, "/tasks/1", strings.NewReader(body))
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("PATCH /tasks/{id}", updateTaskHandler(store))
+		mux.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d", rr.Code)
+		}
+
+		var task Task
+
+		err := json.NewDecoder(rr.Body).Decode(&task)
+		if err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		if task.ID != 1 {
+			t.Fatalf("expected ID 1, got %d", task.ID)
+		}
+
+		if task.Title != "New title" {
+			t.Fatalf("expected title New title, got %q", task.Title)
+		}
+
+		if task.Done != false {
+			t.Fatalf("expected Done false, got %v", task.Done)
+		}
+	})
+
+	t.Run("returns 404 when task not found", func(t *testing.T) {
+		store := NewTaskStore([]Task{
+			{ID: 1, Title: "Old title", Done: false},
+		})
+
+		rr := httptest.NewRecorder()
+		body := `{"title":"New title"}`
+		req := httptest.NewRequest(http.MethodPatch, "/tasks/99", strings.NewReader(body))
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("PATCH /tasks/{id}", updateTaskHandler(store))
+		mux.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusNotFound {
+			t.Fatalf("expected 404, got %d", rr.Code)
+		}
+
+		tasks := store.GetAll()
+		if len(tasks) != 1 {
+			t.Fatalf("expected 1 task, got %d", len(tasks))
+		}
+
+		if tasks[0].Title != "Old title" {
+			t.Fatalf("expected title unchanged, got %q", tasks[0].Title)
+		}
+	})
+}
+
 func TestCreateTaskHandler(t *testing.T) {
 	t.Run("creates task", func(t *testing.T) {
 		store := NewTaskStore([]Task{})
