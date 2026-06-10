@@ -1,17 +1,81 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"os"
 	"sync"
 )
 
 type TaskStore struct {
-	tasks  []Task
-	mu     sync.Mutex
-	nextID int
+	tasks    []Task
+	mu       sync.Mutex
+	nextID   int
+	filePath string
 }
 
 var ErrTaskNotFound = errors.New("task not found")
+
+func NewTaskStoreFromFile(filePath string) (*TaskStore, error) {
+	store := &TaskStore{
+		filePath: filePath,
+	}
+
+	err := store.load()
+	if err != nil {
+		return nil, err
+	}
+
+	return store, nil
+}
+
+func (s *TaskStore) load() error {
+	data, err := os.ReadFile(s.filePath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			s.tasks = []Task{}
+			s.nextID = 1
+			return nil
+		}
+
+		return err
+	}
+
+	err = json.Unmarshal(data, &s.tasks)
+	if err != nil {
+		return err
+	}
+
+	s.nextID = calculateNextID(s.tasks)
+
+	return nil
+}
+
+func calculateNextID(tasks []Task) int {
+	maxID := 0
+
+	for _, task := range tasks {
+		if task.ID > maxID {
+			maxID = task.ID
+		}
+	}
+
+	return maxID + 1
+}
+
+func (s *TaskStore) save() error {
+	data, err := json.MarshalIndent(s.tasks, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(s.filePath, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func NewTaskStore(initialTasks []Task) *TaskStore {
 	return &TaskStore{

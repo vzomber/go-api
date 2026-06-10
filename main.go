@@ -7,11 +7,10 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
-	store := NewTaskStore([]Task{
-		{ID: 1, Title: "Learn Go handlers", Done: false},
-		{ID: 2, Title: "Build task API", Done: false},
-	},
-	)
+	store, err := NewTaskStoreFromFile("tasks.json")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	mux.HandleFunc("PATCH /tasks/{id}", updateTaskHandler(store))
 	mux.HandleFunc("DELETE /tasks/{id}", deleteTaskHandler(store))
@@ -22,7 +21,7 @@ func main() {
 	mux.HandleFunc("/", rootHandler)
 
 	wrappedMux := loggingMiddleware(mux)
-	err := http.ListenAndServe(":8080", wrappedMux)
+	err = http.ListenAndServe(":8080", wrappedMux)
 	if err != nil {
 		log.Fatal("Server error:", err)
 	}
