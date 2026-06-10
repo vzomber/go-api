@@ -64,6 +64,10 @@ func calculateNextID(tasks []Task) int {
 }
 
 func (s *TaskStore) save() error {
+	if s.filePath == "" {
+		return nil
+	}
+
 	data, err := json.MarshalIndent(s.tasks, "", "  ")
 	if err != nil {
 		return err
@@ -84,7 +88,7 @@ func NewTaskStore(initialTasks []Task) *TaskStore {
 	}
 }
 
-func (s *TaskStore) Add(title string) Task {
+func (s *TaskStore) Add(title string) (Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -97,7 +101,12 @@ func (s *TaskStore) Add(title string) Task {
 	s.nextID++
 	s.tasks = append(s.tasks, task)
 
-	return task
+	err := s.save()
+	if err != nil {
+		return Task{}, err
+	}
+
+	return task, nil
 }
 
 func (s *TaskStore) GetAll() []Task {
@@ -130,6 +139,11 @@ func (s *TaskStore) Delete(id int) (Task, error) {
 		if task.ID == id {
 			s.tasks = append(s.tasks[:i], s.tasks[i+1:]...)
 
+			err := s.save()
+			if err != nil {
+				return Task{}, err
+			}
+
 			return task, nil
 		}
 	}
@@ -148,6 +162,11 @@ func (s *TaskStore) Update(id int, updateTaskBody UpdateTaskRequest) (Task, erro
 			}
 			if updateTaskBody.Title != nil {
 				s.tasks[i].Title = *updateTaskBody.Title
+			}
+
+			err := s.save()
+			if err != nil {
+				return Task{}, err
 			}
 
 			return s.tasks[i], nil

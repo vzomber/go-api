@@ -29,7 +29,10 @@ func TestAdd(t *testing.T) {
 	t.Run("adds task and assigns ID", func(t *testing.T) {
 		store := NewTaskStore([]Task{})
 
-		createdTask := store.Add("To go shopping")
+		createdTask, err := store.Add("To go shopping")
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
 
 		if createdTask.ID != 1 {
 			t.Fatalf("expected ID to be %d, but got %d", 1, createdTask.ID)
@@ -191,7 +194,10 @@ func TestTaskStoreFlow(t *testing.T) {
 			t.Fatalf("expected 1 task, got %d", len(tasks))
 		}
 
-		createdTask := store.Add("Third task")
+		createdTask, err := store.Add("Third task")
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
 		if createdTask.ID != 3 {
 			t.Fatalf("expected created task ID 3, got %d", createdTask.ID)
 		}

@@ -60,7 +60,12 @@ func createTaskHandler(store *TaskStore) http.HandlerFunc {
 			return
 		}
 
-		createdTask := store.Add(request.Title)
+		createdTask, err := store.Add(request.Title)
+		if err != nil {
+			log.Printf("failed to save task: %v", err)
+			http.Error(w, "Failed to save new task", http.StatusInternalServerError)
+			return
+		}
 
 		w.WriteHeader(http.StatusCreated)
 		err = json.NewEncoder(w).Encode(createdTask)
