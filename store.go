@@ -84,7 +84,7 @@ func (s *TaskStore) save() error {
 func NewTaskStore(initialTasks []Task) *TaskStore {
 	return &TaskStore{
 		tasks:  initialTasks,
-		nextID: len(initialTasks) + 1,
+		nextID: calculateNextID(initialTasks),
 	}
 }
 
