@@ -110,6 +110,29 @@ func updateTask(db *sql.DB, id int, title string, done bool) (Task, error) {
 	return Task{ID: id, Title: title, Done: done}, nil
 }
 
+func deleteTask(db *sql.DB, id int) (Task, error) {
+	task, err := getTaskById(db, id)
+	if err != nil {
+		return Task{}, err
+	}
+
+	result, err := db.Exec("DELETE FROM tasks WHERE id = ?", id)
+	if err != nil {
+		return Task{}, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return Task{}, err
+	}
+
+	if rowsAffected == 0 {
+		return Task{}, ErrTaskNotFound
+	}
+
+	return task, nil
+}
+
 func main() {
 	db, err := sql.Open("sqlite3", "tasks.db")
 	if err != nil {
