@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"os"
@@ -14,7 +15,33 @@ type TaskStore struct {
 	filePath string
 }
 
+type SQLiteTaskStore struct {
+	db *sql.DB
+}
+
 var ErrTaskNotFound = errors.New("task not found")
+
+func NewSQLiteTaskStore() (*SQLiteTaskStore, error) {
+	db, err := sql.Open("sqlite3", "tasks.db")
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		closeErr := db.Close()
+		if closeErr != nil {
+			return nil, closeErr
+		}
+		return nil, err
+	}
+
+	store := &SQLiteTaskStore{
+		db: db,
+	}
+
+	return store, nil
+}
 
 func NewTaskStoreFromFile(filePath string) (*TaskStore, error) {
 	store := &TaskStore{
