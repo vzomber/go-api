@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"log"
 	"os"
 	"sync"
 )
@@ -40,8 +41,73 @@ func NewSQLiteTaskStore() (*SQLiteTaskStore, error) {
 		db: db,
 	}
 
+	err = store.createTasksTable()
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+
 	return store, nil
 }
+
+func (s *SQLiteTaskStore) createTasksTable() error {
+	query := `
+		CREATE TABLE IF NOT EXISTS tasks (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			title TEXT NOT NULL,
+			done BOOLEAN NOT NULL DEFAULT 0
+		)
+	`
+	_, err := s.db.Exec(query)
+	return err
+}
+
+func (s *SQLiteTaskStore) Add(title string) (Task, error) {
+	result, err := s.db.Exec(`INSERT INTO tasks(title) VALUES(?)`, title)
+	if err != nil {
+		return Task{}, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return Task{}, err
+	}
+
+	return Task{ID: int(id), Title: title, Done: false}, nil
+}
+
+func (s *SQLiteTaskStore) GetAll() ([]Task, error) {
+	rows, err := s.db.Query("SELECT id, title, done FROM tasks")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("failed to close db cursor: %v", err)
+		}
+	}()
+
+	var tasks []Task
+
+	for rows.Next() {
+		var task Task
+
+		err := rows.Scan(&task.ID, &task.Title, &task.Done)
+		if err != nil {
+			return nil, err
+		}
+
+		tasks = append(tasks, task)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func NewTaskStoreFromFile(filePath string) (*TaskStore, error) {
 	store := &TaskStore{
