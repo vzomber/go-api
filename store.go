@@ -107,6 +107,68 @@ func (s *SQLiteTaskStore) GetAll() ([]Task, error) {
 	return tasks, nil
 }
 
+func (s *SQLiteTaskStore) GetByID(id int) (Task, error) {
+	row := s.db.QueryRow("SELECT id, title, done FROM tasks WHERE id = ?", id)
+
+	var task Task
+
+	err := row.Scan(&task.ID, &task.Title, &task.Done)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Task{}, ErrTaskNotFound
+		}
+		return Task{}, err
+	}
+
+	return task, nil
+}
+
+func (s *SQLiteTaskStore) Delete(id int) (Task, error) {
+	task, err := s.GetByID(id)
+	if err != nil {
+		return Task{}, err
+	}
+
+	result, err := s.db.Exec("DELETE FROM tasks WHERE id = ?", id)
+	if err != nil {
+		return Task{}, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return Task{}, err
+	}
+
+	if rowsAffected == 0 {
+		return Task{}, ErrTaskNotFound
+	}
+
+	return task, nil
+}
+
+func (s *SQLiteTaskStore) Update(id int, request UpdateTaskRequest) (Task, error) {
+	result, err := s.db.Exec(`
+		UPDATE tasks SET
+			title = COALESCE(?, title),
+			done  = COALESCE(?, done)
+		WHERE id = ?`,
+		request.Title, request.Done, id)
+	if err != nil {
+		return Task{}, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return Task{}, err
+	}
+
+	if rowsAffected == 0 {
+		return Task{}, ErrTaskNotFound
+	}
+
+	return s.GetByID(id)
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func NewTaskStoreFromFile(filePath string) (*TaskStore, error) {
