@@ -59,7 +59,6 @@ func createTasksTable(db *sql.DB) error {
 		return err
 	}
 
-	log.Println("table created")
 	return nil
 }
 
@@ -93,6 +92,24 @@ func insertTask(db *sql.DB, title string) (Task, error) {
 	return Task{ID: int(id), Title: title, Done: false}, nil
 }
 
+func updateTask(db *sql.DB, id int, title string, done bool) (Task, error) {
+	result, err := db.Exec("UPDATE tasks SET title = ?, done = ? WHERE id = ?", title, done, id)
+	if err != nil {
+		return Task{}, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return Task{}, err
+	}
+
+	if rowsAffected == 0 {
+		return Task{}, ErrTaskNotFound
+	}
+
+	return Task{ID: id, Title: title, Done: done}, nil
+}
+
 func main() {
 	db, err := sql.Open("sqlite3", "tasks.db")
 	if err != nil {
@@ -117,17 +134,23 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Print(rows)
+	log.Printf("all rows %v", rows)
 
 	task, err := getTaskById(db, 1)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Print(task)
 
-	task, err = insertTask(db, "Sell a kidney")
+	log.Printf("task %d %v", 1, task)
+	task, err = insertTask(db, "Sell a bike")
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Print(task)
+	log.Printf("inserted task %d %v", 1, task)
+
+	task, err = updateTask(db, 3, "Build a company", false)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("updated task %d %v", 3, task)
 }
