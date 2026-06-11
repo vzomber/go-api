@@ -79,6 +79,20 @@ func getTaskById(db *sql.DB, id int) (Task, error) {
 	return task, nil
 }
 
+func insertTask(db *sql.DB, title string) (Task, error) {
+	result, err := db.Exec(`INSERT INTO tasks(title) VALUES(?)`, title)
+	if err != nil {
+		return Task{}, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return Task{}, err
+	}
+
+	return Task{ID: int(id), Title: title, Done: false}, nil
+}
+
 func main() {
 	db, err := sql.Open("sqlite3", "tasks.db")
 	if err != nil {
@@ -106,6 +120,12 @@ func main() {
 	log.Print(rows)
 
 	task, err := getTaskById(db, 1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print(task)
+
+	task, err = insertTask(db, "Sell a kidney")
 	if err != nil {
 		log.Fatal(err)
 	}
