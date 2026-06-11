@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"sync"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type TaskStore struct {
@@ -48,6 +50,10 @@ func NewSQLiteTaskStore() (*SQLiteTaskStore, error) {
 	}
 
 	return store, nil
+}
+
+func (s *SQLiteTaskStore) Close() error {
+	return s.db.Close()
 }
 
 func (s *SQLiteTaskStore) createTasksTable() error {

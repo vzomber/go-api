@@ -7,10 +7,12 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
-	store, err := NewTaskStoreFromFile("tasks.json")
+	store, err := NewSQLiteTaskStore()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	defer store.Close()
 
 	mux.HandleFunc("PATCH /tasks/{id}", updateTaskHandler(store))
 	mux.HandleFunc("DELETE /tasks/{id}", deleteTaskHandler(store))

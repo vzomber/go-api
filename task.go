@@ -42,7 +42,7 @@ func (r UpdateTaskRequest) Validate() error {
 	return nil
 }
 
-func createTaskHandler(store *TaskStore) http.HandlerFunc {
+func createTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -76,7 +76,7 @@ func createTaskHandler(store *TaskStore) http.HandlerFunc {
 	}
 }
 
-func updateTaskHandler(store *TaskStore) http.HandlerFunc {
+func updateTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -130,7 +130,7 @@ func updateTaskHandler(store *TaskStore) http.HandlerFunc {
 	}
 }
 
-func deleteTaskHandler(store *TaskStore) http.HandlerFunc {
+func deleteTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		requestedTaskID, err := strconv.Atoi(id)
@@ -162,7 +162,7 @@ func deleteTaskHandler(store *TaskStore) http.HandlerFunc {
 	}
 }
 
-func getTaskHandler(store *TaskStore) http.HandlerFunc {
+func getTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -195,13 +195,18 @@ func getTaskHandler(store *TaskStore) http.HandlerFunc {
 	}
 }
 
-func getTasksHandler(store *TaskStore) http.HandlerFunc {
+func getTasksHandler(store *SQLiteTaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		tasks := store.GetAll()
+		tasks, err := store.GetAll()
+		if err != nil {
+			log.Println("could not get tasks:", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 
-		err := json.NewEncoder(w).Encode(tasks)
+		err = json.NewEncoder(w).Encode(tasks)
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
