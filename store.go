@@ -52,6 +52,27 @@ func NewSQLiteTaskStore() (*SQLiteTaskStore, error) {
 	return store, nil
 }
 
+func (s *SQLiteTaskStore) seedData() error {
+	var count int
+
+	err := s.db.QueryRow("SELECT COUNT(*) FROM tasks").Scan(&count)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+
+	_, err = s.db.Exec(`
+		INSERT INTO tasks (title, done)
+		VALUES
+			('Learn Go handlers', 0),
+			('Build task API', 0)
+	`)
+
+	return err
+}
+
 func (s *SQLiteTaskStore) Close() error {
 	return s.db.Close()
 }

@@ -12,6 +12,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = store.seedData()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	defer store.Close()
 
 	mux.HandleFunc("PATCH /tasks/{id}", updateTaskHandler(store))
