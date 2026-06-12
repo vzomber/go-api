@@ -42,7 +42,7 @@ func (r UpdateTaskRequest) Validate() error {
 	return nil
 }
 
-func createTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
+func createTaskHandler(store TaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -76,7 +76,7 @@ func createTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
 	}
 }
 
-func updateTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
+func updateTaskHandler(store TaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -130,7 +130,7 @@ func updateTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
 	}
 }
 
-func deleteTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
+func deleteTaskHandler(store TaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		requestedTaskID, err := strconv.Atoi(id)
@@ -162,7 +162,7 @@ func deleteTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
 	}
 }
 
-func getTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
+func getTaskHandler(store TaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -195,7 +195,7 @@ func getTaskHandler(store *SQLiteTaskStore) http.HandlerFunc {
 	}
 }
 
-func getTasksHandler(store *SQLiteTaskStore) http.HandlerFunc {
+func getTasksHandler(store TaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 

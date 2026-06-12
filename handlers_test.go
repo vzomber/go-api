@@ -10,7 +10,7 @@ import (
 
 func TestDeleteTaskHandler(t *testing.T) {
 	t.Run("deletes task", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "First task", Done: false},
 		})
 
@@ -25,13 +25,16 @@ func TestDeleteTaskHandler(t *testing.T) {
 			t.Fatalf("expected 200, got %d", rr.Code)
 		}
 
-		tasks := store.GetAll()
+		tasks, err := store.GetAll()
+		if err != nil {
+			t.Fatalf("expected no err, got %v", err)
+		}
 		if len(tasks) != 0 {
 			t.Fatalf("expected 0 tasks, got %d", len(tasks))
 		}
 	})
 	t.Run("returns 404 when task not found", func(t *testing.T) {
-		store := NewTaskStore([]Task{})
+		store := NewMemoryTaskStore([]Task{})
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodDelete, "/tasks/99", nil)
@@ -48,7 +51,7 @@ func TestDeleteTaskHandler(t *testing.T) {
 
 func TestUpdateTaskHandler(t *testing.T) {
 	t.Run("updates task title", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "Old title", Done: false},
 		})
 
@@ -81,7 +84,7 @@ func TestUpdateTaskHandler(t *testing.T) {
 	})
 
 	t.Run("updates task", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "Old title", Done: false},
 		})
 
@@ -118,7 +121,7 @@ func TestUpdateTaskHandler(t *testing.T) {
 	})
 
 	t.Run("returns 404 when task not found", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "Old title", Done: false},
 		})
 
@@ -134,7 +137,10 @@ func TestUpdateTaskHandler(t *testing.T) {
 			t.Fatalf("expected 404, got %d", rr.Code)
 		}
 
-		tasks := store.GetAll()
+		tasks, err := store.GetAll()
+		if err != nil {
+			t.Fatalf("expected no err, got %v", err)
+		}
 		if len(tasks) != 1 {
 			t.Fatalf("expected 1 task, got %d", len(tasks))
 		}
@@ -147,7 +153,7 @@ func TestUpdateTaskHandler(t *testing.T) {
 
 func TestCreateTaskHandler(t *testing.T) {
 	t.Run("creates task", func(t *testing.T) {
-		store := NewTaskStore([]Task{})
+		store := NewMemoryTaskStore([]Task{})
 
 		rr := httptest.NewRecorder()
 		body := `{"title":"Learn Js"}`
@@ -177,14 +183,16 @@ func TestCreateTaskHandler(t *testing.T) {
 			t.Fatalf("expected title Learn Js, got %q", task.Title)
 		}
 
-		tasks := store.GetAll()
-
+		tasks, err := store.GetAll()
+		if err != nil {
+			t.Fatalf("expected no err, got %v", err)
+		}
 		if len(tasks) != 1 {
 			t.Fatalf("expected 1 task, got %d", len(tasks))
 		}
 	})
 	t.Run("returns 400 for invalid json", func(t *testing.T) {
-		store := NewTaskStore([]Task{})
+		store := NewMemoryTaskStore([]Task{})
 
 		rr := httptest.NewRecorder()
 		body := `{"title":New task}`
@@ -202,14 +210,17 @@ func TestCreateTaskHandler(t *testing.T) {
 			t.Fatalf("unexpected response body: %q", rr.Body.String())
 		}
 
-		tasks := store.GetAll()
+		tasks, err := store.GetAll()
+		if err != nil {
+			t.Fatalf("expected no err, got %v", err)
+		}
 		if len(tasks) != 0 {
 			t.Fatalf("expected 0 tasks, got %d", len(tasks))
 		}
 	})
 
 	t.Run("returns 400 for invalid task data", func(t *testing.T) {
-		store := NewTaskStore([]Task{})
+		store := NewMemoryTaskStore([]Task{})
 
 		rr := httptest.NewRecorder()
 		body := `{}`
@@ -227,7 +238,10 @@ func TestCreateTaskHandler(t *testing.T) {
 			t.Fatalf("unexpected response body: %q", rr.Body.String())
 		}
 
-		tasks := store.GetAll()
+		tasks, err := store.GetAll()
+		if err != nil {
+			t.Fatalf("expected no err, got %v", err)
+		}
 		if len(tasks) != 0 {
 			t.Fatalf("expected 0 tasks, got %d", len(tasks))
 		}
@@ -236,7 +250,7 @@ func TestCreateTaskHandler(t *testing.T) {
 
 func TestGetTaskHandler(t *testing.T) {
 	t.Run("returns task", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "First task", Done: false},
 		})
 
@@ -266,7 +280,7 @@ func TestGetTaskHandler(t *testing.T) {
 
 	})
 	t.Run("returns 404 when task not found", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "First task", Done: false},
 		})
 
@@ -284,7 +298,7 @@ func TestGetTaskHandler(t *testing.T) {
 }
 
 func TestGetTasksHandler(t *testing.T) {
-	store := NewTaskStore([]Task{
+	store := NewMemoryTaskStore([]Task{
 		{ID: 1, Title: "First task", Done: false},
 		{ID: 2, Title: "Second task", Done: true},
 	})

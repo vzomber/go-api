@@ -2,20 +2,19 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"log"
-	"os"
 	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type TaskStore struct {
-	tasks    []Task
-	mu       sync.Mutex
-	nextID   int
-	filePath string
+type TaskStore interface {
+	GetAll() ([]Task, error)
+	GetByID(id int) (Task, error)
+	Add(title string) (Task, error)
+	Update(id int, request UpdateTaskRequest) (Task, error)
+	Delete(id int) (Task, error)
 }
 
 type SQLiteTaskStore struct {
@@ -198,39 +197,10 @@ func (s *SQLiteTaskStore) Update(id int, request UpdateTaskRequest) (Task, error
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func NewTaskStoreFromFile(filePath string) (*TaskStore, error) {
-	store := &TaskStore{
-		filePath: filePath,
-	}
-
-	err := store.load()
-	if err != nil {
-		return nil, err
-	}
-
-	return store, nil
-}
-
-func (s *TaskStore) load() error {
-	data, err := os.ReadFile(s.filePath)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			s.tasks = []Task{}
-			s.nextID = 1
-			return nil
-		}
-
-		return err
-	}
-
-	err = json.Unmarshal(data, &s.tasks)
-	if err != nil {
-		return err
-	}
-
-	s.nextID = calculateNextID(s.tasks)
-
-	return nil
+type MemoryTaskStore struct {
+	tasks  []Task
+	mu     sync.Mutex
+	nextID int
 }
 
 func calculateNextID(tasks []Task) int {
@@ -245,63 +215,42 @@ func calculateNextID(tasks []Task) int {
 	return maxID + 1
 }
 
-func (s *TaskStore) save() error {
-	if s.filePath == "" {
-		return nil
-	}
+func NewMemoryTaskStore(tasks []Task) *MemoryTaskStore {
+	tasksCopy := make([]Task, len(tasks))
+	copy(tasksCopy, tasks)
 
-	data, err := json.MarshalIndent(s.tasks, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(s.filePath, data, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func NewTaskStore(initialTasks []Task) *TaskStore {
-	return &TaskStore{
-		tasks:  initialTasks,
-		nextID: calculateNextID(initialTasks),
+	return &MemoryTaskStore{
+		tasks:  tasksCopy,
+		nextID: calculateNextID(tasksCopy),
 	}
 }
 
-func (s *TaskStore) Add(title string) (Task, error) {
+func (s *MemoryTaskStore) Add(title string) (Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	task := Task{
 		Title: title,
 		ID:    s.nextID,
-		Done:  false,
 	}
 
 	s.nextID++
 	s.tasks = append(s.tasks, task)
 
-	err := s.save()
-	if err != nil {
-		return Task{}, err
-	}
-
 	return task, nil
 }
 
-func (s *TaskStore) GetAll() []Task {
+func (s *MemoryTaskStore) GetAll() ([]Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	tasksCopy := make([]Task, len(s.tasks))
 	copy(tasksCopy, s.tasks)
 
-	return tasksCopy
+	return tasksCopy, nil
 }
 
-func (s *TaskStore) GetByID(requestedTaskID int) (Task, error) {
+func (s *MemoryTaskStore) GetByID(requestedTaskID int) (Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -313,7 +262,7 @@ func (s *TaskStore) GetByID(requestedTaskID int) (Task, error) {
 	return Task{}, ErrTaskNotFound
 }
 
-func (s *TaskStore) Delete(id int) (Task, error) {
+func (s *MemoryTaskStore) Delete(id int) (Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -321,18 +270,13 @@ func (s *TaskStore) Delete(id int) (Task, error) {
 		if task.ID == id {
 			s.tasks = append(s.tasks[:i], s.tasks[i+1:]...)
 
-			err := s.save()
-			if err != nil {
-				return Task{}, err
-			}
-
 			return task, nil
 		}
 	}
 	return Task{}, ErrTaskNotFound
 }
 
-func (s *TaskStore) Update(id int, updateTaskBody UpdateTaskRequest) (Task, error) {
+func (s *MemoryTaskStore) Update(id int, updateTaskBody UpdateTaskRequest) (Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -344,11 +288,6 @@ func (s *TaskStore) Update(id int, updateTaskBody UpdateTaskRequest) (Task, erro
 			}
 			if updateTaskBody.Title != nil {
 				s.tasks[i].Title = *updateTaskBody.Title
-			}
-
-			err := s.save()
-			if err != nil {
-				return Task{}, err
 			}
 
 			return s.tasks[i], nil
