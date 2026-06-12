@@ -17,7 +17,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	defer store.Close()
+	defer func() {
+		if err := store.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	mux.HandleFunc("PATCH /tasks/{id}", updateTaskHandler(store))
 	mux.HandleFunc("DELETE /tasks/{id}", deleteTaskHandler(store))

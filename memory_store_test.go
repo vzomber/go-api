@@ -11,10 +11,12 @@ func TestGetAll(t *testing.T) {
 			{ID: 1, Title: "First task", Done: false},
 			{ID: 2, Title: "Second task", Done: true},
 		}
-		store := NewTaskStore(mockTasks)
+		store := NewMemoryTaskStore(mockTasks)
 
-		tasks := store.GetAll()
-
+		tasks, err := store.GetAll()
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
 		if len(tasks) != 2 {
 			t.Fatalf("expected 2 tasks, got %d", len(tasks))
 		}
@@ -27,7 +29,7 @@ func TestGetAll(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	t.Run("adds task and assigns ID", func(t *testing.T) {
-		store := NewTaskStore([]Task{})
+		store := NewMemoryTaskStore([]Task{})
 
 		createdTask, err := store.Add("To go shopping")
 		if err != nil {
@@ -46,7 +48,10 @@ func TestAdd(t *testing.T) {
 			t.Fatalf("expected Done to be false, got %v", createdTask.Done)
 		}
 
-		tasks := store.GetAll()
+		tasks, err := store.GetAll()
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
 		if len(tasks) != 1 {
 			t.Fatalf("expected len to be %d, but got %d", 1, len(tasks))
 		}
@@ -55,7 +60,7 @@ func TestAdd(t *testing.T) {
 
 func TestGetByID(t *testing.T) {
 	t.Run("returns task when task exists", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "First task", Done: false},
 			{ID: 2, Title: "Second task", Done: true},
 		})
@@ -73,7 +78,7 @@ func TestGetByID(t *testing.T) {
 	})
 
 	t.Run("returns ErrTaskNotFound when task does not exist", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "First task", Done: false},
 			{ID: 2, Title: "Second task", Done: true},
 		})
@@ -87,7 +92,7 @@ func TestGetByID(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	t.Run("updates Title", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "First task", Done: false},
 			{ID: 2, Title: "Second task", Done: true},
 		})
@@ -107,7 +112,7 @@ func TestUpdate(t *testing.T) {
 	})
 
 	t.Run("updates Done", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "First task", Done: false},
 			{ID: 2, Title: "Second task", Done: true},
 		})
@@ -129,7 +134,7 @@ func TestUpdate(t *testing.T) {
 	})
 
 	t.Run("returns ErrTaskNotFound when task does not exist", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "First task", Done: false},
 			{ID: 2, Title: "Second task", Done: true},
 		})
@@ -146,7 +151,7 @@ func TestUpdate(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	t.Run("returns deleted task", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "First task", Done: false},
 			{ID: 2, Title: "Second task", Done: true},
 		})
@@ -159,7 +164,10 @@ func TestDelete(t *testing.T) {
 			t.Fatalf("expected ID 1, got %d", task.ID)
 		}
 
-		tasks := store.GetAll()
+		tasks, err := store.GetAll()
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
 		if len(tasks) != 1 {
 			t.Fatalf("expected 1 task remaining, got %d", len(tasks))
 		}
@@ -169,7 +177,7 @@ func TestDelete(t *testing.T) {
 	})
 
 	t.Run("returns ErrTaskNotFound when task does not exist", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "First task", Done: false},
 			{ID: 2, Title: "Second task", Done: true},
 		})
@@ -183,13 +191,15 @@ func TestDelete(t *testing.T) {
 
 func TestTaskStoreFlow(t *testing.T) {
 	t.Run("can add, delete and get tasts", func(t *testing.T) {
-		store := NewTaskStore([]Task{
+		store := NewMemoryTaskStore([]Task{
 			{ID: 1, Title: "First task", Done: false},
 			{ID: 2, Title: "Second task", Done: true},
 		})
 
-		tasks := store.GetAll()
-
+		tasks, err := store.GetAll()
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
 		if len(tasks) != 2 {
 			t.Fatalf("expected 1 task, got %d", len(tasks))
 		}
@@ -215,7 +225,10 @@ func TestTaskStoreFlow(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		tasks = store.GetAll()
+		tasks, err = store.GetAll()
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
 		if len(tasks) != 2 {
 			t.Fatalf("expected 2 tasks after delete, got %d", len(tasks))
 		}
