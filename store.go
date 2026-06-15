@@ -42,9 +42,12 @@ func NewSQLiteTaskStore() (*SQLiteTaskStore, error) {
 		db: db,
 	}
 
-	err = store.createTasksTable()
+	err = createTasksTable(db)
 	if err != nil {
-		db.Close()
+		closeErr := db.Close()
+		if closeErr != nil {
+			log.Printf("failed to close db: %v", closeErr)
+		}
 		return nil, err
 	}
 
@@ -76,15 +79,14 @@ func (s *SQLiteTaskStore) Close() error {
 	return s.db.Close()
 }
 
-func (s *SQLiteTaskStore) createTasksTable() error {
-	query := `
+func createTasksTable(db *sql.DB) error {
+	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS tasks (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			title TEXT NOT NULL,
 			done BOOLEAN NOT NULL DEFAULT 0
-		)
-	`
-	_, err := s.db.Exec(query)
+		);
+	`)
 	return err
 }
 
