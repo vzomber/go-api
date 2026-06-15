@@ -57,17 +57,33 @@ func TestSQLiteTaskStoreGetAll(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	_, err = store.Add("sell PS5")
+	_, err = store.Add("Sell PS5")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	tasks, err := store.GetAll()
+	tasks, err := store.GetAll(nil)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 	if len(tasks) != 2 {
 		t.Fatalf("expected 2 tasks, got %d", len(tasks))
+	}
+
+	done := true
+	updateBody := UpdateTaskRequest{Done: &done}
+
+	_, err = store.Update(1, updateBody)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	tasks, err = store.GetAll(&done)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if len(tasks) != 1 {
+		t.Fatalf("expected 1 task, got %d", len(tasks))
 	}
 }
 

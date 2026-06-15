@@ -197,15 +197,27 @@ func getTaskHandler(store TaskStore) http.HandlerFunc {
 
 func getTasksHandler(store TaskStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		var doneFilter *bool
 
-		tasks, err := store.GetAll()
+		doneParam := r.URL.Query().Get("done")
+		if doneParam != "" {
+			done, err := strconv.ParseBool(doneParam)
+			if err != nil {
+				log.Println("invalid done filter:", err)
+				http.Error(w, "invalid done filter", http.StatusBadRequest)
+				return
+			}
+			doneFilter = &done
+		}
+
+		tasks, err := store.GetAll(doneFilter)
 		if err != nil {
 			log.Println("could not get tasks:", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(tasks)
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)

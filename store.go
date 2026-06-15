@@ -10,7 +10,7 @@ import (
 )
 
 type TaskStore interface {
-	GetAll() ([]Task, error)
+	GetAll(done *bool) ([]Task, error)
 	GetByID(id int) (Task, error)
 	Add(title string) (Task, error)
 	Update(id int, request UpdateTaskRequest) (Task, error)
@@ -109,7 +109,15 @@ func (s *SQLiteTaskStore) Add(title string) (Task, error) {
 	return Task{ID: int(id), Title: title, Done: false}, nil
 }
 
-func (s *SQLiteTaskStore) GetAll() ([]Task, error) {
+func appendIfMatchesFilter(tasks []Task, task Task, done *bool) []Task {
+	if done != nil && *done != task.Done {
+		return tasks
+	}
+
+	return append(tasks, task)
+}
+
+func (s *SQLiteTaskStore) GetAll(done *bool) ([]Task, error) {
 	rows, err := s.db.Query("SELECT id, title, done FROM tasks")
 	if err != nil {
 		return nil, err
@@ -130,7 +138,7 @@ func (s *SQLiteTaskStore) GetAll() ([]Task, error) {
 			return nil, err
 		}
 
-		tasks = append(tasks, task)
+		tasks = appendIfMatchesFilter(tasks, task, done)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -247,7 +255,7 @@ func (s *MemoryTaskStore) Add(title string) (Task, error) {
 	return task, nil
 }
 
-func (s *MemoryTaskStore) GetAll() ([]Task, error) {
+func (s *MemoryTaskStore) GetAll(done *bool) ([]Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
