@@ -14,9 +14,8 @@ func setupSQLiteTestStore(t *testing.T) *SQLiteTaskStore {
 		t.Fatalf("failed to open test db: %v", err)
 	}
 
-	store := &SQLiteTaskStore{db: db}
-
-	if err := createTasksTable(db); err != nil {
+	store, err := NewSQLiteTaskStore(db)
+	if err != nil {
 		t.Fatalf("failed to create table: %v", err)
 	}
 

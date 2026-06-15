@@ -23,8 +23,8 @@ type SQLiteTaskStore struct {
 
 var ErrTaskNotFound = errors.New("task not found")
 
-func NewSQLiteTaskStore() (*SQLiteTaskStore, error) {
-	db, err := sql.Open("sqlite3", "tasks.db")
+func OpenSQLiteTaskStore(path string) (*SQLiteTaskStore, error) {
+	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
 	}
@@ -38,11 +38,7 @@ func NewSQLiteTaskStore() (*SQLiteTaskStore, error) {
 		return nil, err
 	}
 
-	store := &SQLiteTaskStore{
-		db: db,
-	}
-
-	err = createTasksTable(db)
+	store, err := NewSQLiteTaskStore(db)
 	if err != nil {
 		closeErr := db.Close()
 		if closeErr != nil {
@@ -52,6 +48,15 @@ func NewSQLiteTaskStore() (*SQLiteTaskStore, error) {
 	}
 
 	return store, nil
+}
+
+func NewSQLiteTaskStore(db *sql.DB) (*SQLiteTaskStore, error) {
+	err := createTasksTable(db)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SQLiteTaskStore{db: db}, nil
 }
 
 func (s *SQLiteTaskStore) seedData() error {

@@ -7,7 +7,7 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
-	store, err := NewSQLiteTaskStore()
+	store, err := OpenSQLiteTaskStore("tasks.db")
 	if err != nil {
 		log.Fatal(err)
 	}
