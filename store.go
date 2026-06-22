@@ -259,10 +259,17 @@ func (s *MemoryTaskStore) GetAll(done *bool) ([]Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	tasksCopy := make([]Task, len(s.tasks))
-	copy(tasksCopy, s.tasks)
+	var tasks []Task
 
-	return tasksCopy, nil
+	for _, task := range s.tasks {
+		if done != nil && task.Done != *done {
+			continue
+		}
+
+		tasks = append(tasks, task)
+	}
+
+	return tasks, nil
 }
 
 func (s *MemoryTaskStore) GetByID(requestedTaskID int) (Task, error) {

@@ -142,21 +142,21 @@ func deleteTaskHandler(store TaskStore) http.HandlerFunc {
 		task, err := store.Delete(requestedTaskID)
 		if err != nil {
 			if errors.Is(err, ErrTaskNotFound) {
-				http.Error(w, "Task not found", http.StatusNotFound)
 				log.Printf("task %d not found", requestedTaskID)
+				http.Error(w, "Task not found", http.StatusNotFound)
 				return
 			}
 
-			http.Error(w, "Server error", http.StatusInternalServerError)
 			log.Println("Failed to delete task: ", err)
+			http.Error(w, "Server error", http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(task)
 		if err != nil {
+			log.Println("Failed to encode task: ", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			log.Println("Failed to encode task:", err)
 			return
 		}
 	}
@@ -176,8 +176,8 @@ func getTaskHandler(store TaskStore) http.HandlerFunc {
 		task, err := store.GetByID(requestedTaskID)
 		if err != nil {
 			if errors.Is(err, ErrTaskNotFound) {
-				http.Error(w, "Task not found", http.StatusNotFound)
 				log.Printf("task %d not found", requestedTaskID)
+				http.Error(w, "Task not found", http.StatusNotFound)
 				return
 			}
 
@@ -203,8 +203,8 @@ func getTasksHandler(store TaskStore) http.HandlerFunc {
 		if doneParam != "" {
 			done, err := strconv.ParseBool(doneParam)
 			if err != nil {
-				log.Println("invalid done filter:", err)
-				http.Error(w, "invalid done filter", http.StatusBadRequest)
+				log.Println("invalid done filter: ", err)
+				http.Error(w, "invalid done filter ", http.StatusBadRequest)
 				return
 			}
 			doneFilter = &done
@@ -212,15 +212,15 @@ func getTasksHandler(store TaskStore) http.HandlerFunc {
 
 		tasks, err := store.GetAll(doneFilter)
 		if err != nil {
-			log.Println("could not get tasks:", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			log.Println("could not get tasks: ", err)
+			http.Error(w, "Internal server error ", http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(tasks)
 		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Internal server error ", http.StatusInternalServerError)
 			return
 		}
 	}

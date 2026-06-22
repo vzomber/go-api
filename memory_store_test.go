@@ -234,3 +234,42 @@ func TestTaskStoreFlow(t *testing.T) {
 		}
 	})
 }
+
+func TestMemoryTaskStoreGetAllFiltersByDone(t *testing.T) {
+	t.Run("filters with done = true", func(t *testing.T) {
+		store := NewMemoryTaskStore([]Task{
+			{ID: 1, Title: "First task", Done: false},
+			{ID: 2, Title: "Second task", Done: true},
+		})
+
+		done := true
+		tasks, err := store.GetAll(&done)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if len(tasks) != 1 {
+			t.Fatalf("expected 1 task, got %d", len(tasks))
+		}
+		if !tasks[0].Done {
+			t.Fatalf("expected task to be done")
+		}
+	})
+	t.Run("filters with done = false", func(t *testing.T) {
+		store := NewMemoryTaskStore([]Task{
+			{ID: 1, Title: "First task", Done: false},
+			{ID: 2, Title: "Second task", Done: true},
+		})
+
+		done := false
+		tasks, err := store.GetAll(&done)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if len(tasks) != 1 {
+			t.Fatalf("expected 1 task, got %d", len(tasks))
+		}
+		if tasks[0].Done {
+			t.Fatalf("expected task to be not done")
+		}
+	})
+}
