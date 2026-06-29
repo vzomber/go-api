@@ -403,3 +403,117 @@ func TestGetTasksHandlerInvalidDoneFilter(t *testing.T) {
 		t.Fatalf("expected 400, got %d", rr.Code)
 	}
 }
+func TestGetTasksHandlerPaginationLimit(t *testing.T) {
+	store := NewMemoryTaskStore([]Task{
+		{ID: 1, Title: "First task", Done: false},
+		{ID: 2, Title: "Second task", Done: false},
+	})
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/tasks?limit=1", nil)
+
+	handler := getTasksHandler(store)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+
+	var tasks []Task
+	if err := json.NewDecoder(rr.Body).Decode(&tasks); err != nil {
+		t.Fatalf("expected valid JSON, got %v", err)
+	}
+
+	if len(tasks) != 1 {
+		t.Fatalf("expected 1 task, got %d", len(tasks))
+	}
+}
+
+func TestGetTasksHandlerPaginationOffset(t *testing.T) {
+	store := NewMemoryTaskStore([]Task{
+		{ID: 1, Title: "First task", Done: false},
+		{ID: 2, Title: "Second task", Done: false},
+	})
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/tasks?offset=1", nil)
+
+	handler := getTasksHandler(store)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+
+	var tasks []Task
+	if err := json.NewDecoder(rr.Body).Decode(&tasks); err != nil {
+		t.Fatalf("expected valid JSON, got %v", err)
+	}
+
+	if len(tasks) != 1 {
+		t.Fatalf("expected 1 task, got %d", len(tasks))
+	}
+
+	if tasks[0].ID != 2 {
+		t.Fatalf("expected task ID 2, got %d", tasks[0].ID)
+	}
+}
+
+func TestGetTasksHandlerPaginationOffsetAndLimit(t *testing.T) {
+	store := NewMemoryTaskStore([]Task{
+		{ID: 1, Title: "First task", Done: false},
+		{ID: 2, Title: "Second task", Done: false},
+		{ID: 3, Title: "Third task", Done: false},
+	})
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/tasks?offset=1&limit=1", nil)
+
+	handler := getTasksHandler(store)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+
+	var tasks []Task
+	if err := json.NewDecoder(rr.Body).Decode(&tasks); err != nil {
+		t.Fatalf("expected valid JSON, got %v", err)
+	}
+
+	if len(tasks) != 1 {
+		t.Fatalf("expected 1 task, got %d", len(tasks))
+	}
+
+	if tasks[0].ID != 2 {
+		t.Fatalf("expected task ID 2, got %d", tasks[0].ID)
+	}
+}
+
+func TestGetTasksHandlerInvalidLimit(t *testing.T) {
+	store := NewMemoryTaskStore([]Task{})
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/tasks?limit=-1", nil)
+
+	handler := getTasksHandler(store)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rr.Code)
+	}
+}
+
+func TestGetTasksHandlerInvalidOffset(t *testing.T) {
+	store := NewMemoryTaskStore([]Task{})
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/tasks?offset=-1", nil)
+
+	handler := getTasksHandler(store)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rr.Code)
+	}
+}

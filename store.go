@@ -115,12 +115,34 @@ func (s *SQLiteTaskStore) Add(title string) (Task, error) {
 	return Task{ID: int(id), Title: title, Done: false}, nil
 }
 
-func appendIfMatchesFilter(tasks []Task, task Task, taskFilter TaskFilter) []Task {
-	if taskFilter.Done != nil && *taskFilter.Done != task.Done {
+func appendIfMatchesFilter(tasks []Task, task Task, done *bool) []Task {
+	if done != nil && *done != task.Done {
 		return tasks
 	}
 
 	return append(tasks, task)
+}
+
+func applyPagination(tasks []Task, offset *int, limit *int) []Task {
+	start := 0
+	if offset != nil {
+		start = *offset
+	}
+
+	if start > len(tasks) {
+		return []Task{}
+	}
+
+	end := len(tasks)
+	if limit != nil {
+		end = start + *limit
+	}
+
+	if end > len(tasks) {
+		end = len(tasks)
+	}
+
+	return tasks[start:end]
 }
 
 func (s *SQLiteTaskStore) GetAll(taskFilter TaskFilter) ([]Task, error) {
@@ -144,12 +166,14 @@ func (s *SQLiteTaskStore) GetAll(taskFilter TaskFilter) ([]Task, error) {
 			return nil, err
 		}
 
-		tasks = appendIfMatchesFilter(tasks, task, taskFilter)
+		tasks = appendIfMatchesFilter(tasks, task, taskFilter.Done)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
+	tasks = applyPagination(tasks, taskFilter.Offset, taskFilter.Limit)
 
 	return tasks, nil
 }
@@ -261,19 +285,21 @@ func (s *MemoryTaskStore) Add(title string) (Task, error) {
 	return task, nil
 }
 
-func (s *MemoryTaskStore) GetAll(taskFiler TaskFilter) ([]Task, error) {
+func (s *MemoryTaskStore) GetAll(taskFilter TaskFilter) ([]Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	var tasks []Task
 
 	for _, task := range s.tasks {
-		if taskFiler.Done != nil && task.Done != *taskFiler.Done {
+		if taskFilter.Done != nil && task.Done != *taskFilter.Done {
 			continue
 		}
 
 		tasks = append(tasks, task)
 	}
+
+	tasks = applyPagination(tasks, taskFilter.Offset, taskFilter.Limit)
 
 	return tasks, nil
 }

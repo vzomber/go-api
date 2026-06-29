@@ -273,3 +273,66 @@ func TestMemoryTaskStoreGetAllFiltersByDone(t *testing.T) {
 		}
 	})
 }
+
+func TestMemoryTaskStoreGetAllWithPagination(t *testing.T) {
+	store := NewMemoryTaskStore([]Task{
+		{ID: 1, Title: "First task", Done: false},
+		{ID: 2, Title: "Second task", Done: false},
+		{ID: 3, Title: "Third task", Done: false},
+	})
+
+	t.Run("applies limit", func(t *testing.T) {
+		limit := 2
+
+		tasks, err := store.GetAll(TaskFilter{Limit: &limit})
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+
+		if len(tasks) != 2 {
+			t.Fatalf("expected 2 tasks, got %d", len(tasks))
+		}
+
+		if tasks[0].ID != 1 || tasks[1].ID != 2 {
+			t.Fatalf("expected first two tasks, got %+v", tasks)
+		}
+	})
+
+	t.Run("applies offset", func(t *testing.T) {
+		offset := 1
+
+		tasks, err := store.GetAll(TaskFilter{Offset: &offset})
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+
+		if len(tasks) != 2 {
+			t.Fatalf("expected 2 tasks, got %d", len(tasks))
+		}
+
+		if tasks[0].ID != 2 || tasks[1].ID != 3 {
+			t.Fatalf("expected second and third tasks, got %+v", tasks)
+		}
+	})
+
+	t.Run("applies offset and limit", func(t *testing.T) {
+		offset := 1
+		limit := 1
+
+		tasks, err := store.GetAll(TaskFilter{
+			Offset: &offset,
+			Limit:  &limit,
+		})
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+
+		if len(tasks) != 1 {
+			t.Fatalf("expected 1 task, got %d", len(tasks))
+		}
+
+		if tasks[0].ID != 2 {
+			t.Fatalf("expected task ID 2, got %d", tasks[0].ID)
+		}
+	})
+}
