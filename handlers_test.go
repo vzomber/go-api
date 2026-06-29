@@ -25,7 +25,7 @@ func TestDeleteTaskHandler(t *testing.T) {
 			t.Fatalf("expected 200, got %d", rr.Code)
 		}
 
-		tasks, err := store.GetAll(nil)
+		tasks, err := store.GetAll(TaskFilter{})
 		if err != nil {
 			t.Fatalf("expected no err, got %v", err)
 		}
@@ -137,7 +137,7 @@ func TestUpdateTaskHandler(t *testing.T) {
 			t.Fatalf("expected 404, got %d", rr.Code)
 		}
 
-		tasks, err := store.GetAll(nil)
+		tasks, err := store.GetAll(TaskFilter{})
 		if err != nil {
 			t.Fatalf("expected no err, got %v", err)
 		}
@@ -183,7 +183,7 @@ func TestCreateTaskHandler(t *testing.T) {
 			t.Fatalf("expected title Learn Js, got %q", task.Title)
 		}
 
-		tasks, err := store.GetAll(nil)
+		tasks, err := store.GetAll(TaskFilter{})
 		if err != nil {
 			t.Fatalf("expected no err, got %v", err)
 		}
@@ -210,7 +210,7 @@ func TestCreateTaskHandler(t *testing.T) {
 			t.Fatalf("unexpected response body: %q", rr.Body.String())
 		}
 
-		tasks, err := store.GetAll(nil)
+		tasks, err := store.GetAll(TaskFilter{})
 		if err != nil {
 			t.Fatalf("expected no err, got %v", err)
 		}
@@ -238,7 +238,7 @@ func TestCreateTaskHandler(t *testing.T) {
 			t.Fatalf("unexpected response body: %q", rr.Body.String())
 		}
 
-		tasks, err := store.GetAll(nil)
+		tasks, err := store.GetAll(TaskFilter{})
 		if err != nil {
 			t.Fatalf("expected no err, got %v", err)
 		}

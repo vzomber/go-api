@@ -62,7 +62,7 @@ func TestSQLiteTaskStoreGetAll(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	tasks, err := store.GetAll(nil)
+	tasks, err := store.GetAll(TaskFilter{})
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -78,7 +78,7 @@ func TestSQLiteTaskStoreGetAll(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	tasks, err = store.GetAll(&done)
+	tasks, err = store.GetAll(TaskFilter{Done: &done})
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

@@ -13,7 +13,7 @@ func TestGetAll(t *testing.T) {
 		}
 		store := NewMemoryTaskStore(mockTasks)
 
-		tasks, err := store.GetAll(nil)
+		tasks, err := store.GetAll(TaskFilter{})
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
@@ -48,7 +48,7 @@ func TestAdd(t *testing.T) {
 			t.Fatalf("expected Done to be false, got %v", createdTask.Done)
 		}
 
-		tasks, err := store.GetAll(nil)
+		tasks, err := store.GetAll(TaskFilter{})
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
@@ -164,7 +164,7 @@ func TestDelete(t *testing.T) {
 			t.Fatalf("expected ID 1, got %d", task.ID)
 		}
 
-		tasks, err := store.GetAll(nil)
+		tasks, err := store.GetAll(TaskFilter{})
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
@@ -196,7 +196,7 @@ func TestTaskStoreFlow(t *testing.T) {
 			{ID: 2, Title: "Second task", Done: true},
 		})
 
-		tasks, err := store.GetAll(nil)
+		tasks, err := store.GetAll(TaskFilter{})
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
@@ -225,7 +225,7 @@ func TestTaskStoreFlow(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		tasks, err = store.GetAll(nil)
+		tasks, err = store.GetAll(TaskFilter{})
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
@@ -243,7 +243,7 @@ func TestMemoryTaskStoreGetAllFiltersByDone(t *testing.T) {
 		})
 
 		done := true
-		tasks, err := store.GetAll(&done)
+		tasks, err := store.GetAll(TaskFilter{Done: &done})
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
@@ -261,7 +261,7 @@ func TestMemoryTaskStoreGetAllFiltersByDone(t *testing.T) {
 		})
 
 		done := false
-		tasks, err := store.GetAll(&done)
+		tasks, err := store.GetAll(TaskFilter{Done: &done})
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}

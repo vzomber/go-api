@@ -210,7 +210,7 @@ func getTasksHandler(store TaskStore) http.HandlerFunc {
 			doneFilter = &done
 		}
 
-		tasks, err := store.GetAll(doneFilter)
+		tasks, err := store.GetAll(TaskFilter{Done: doneFilter})
 		if err != nil {
 			log.Println("could not get tasks: ", err)
 			http.Error(w, "Internal server error ", http.StatusInternalServerError)

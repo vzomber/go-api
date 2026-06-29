@@ -9,8 +9,14 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type TaskFilter struct {
+	Done   *bool
+	Limit  *int
+	Offset *int
+}
+
 type TaskStore interface {
-	GetAll(done *bool) ([]Task, error)
+	GetAll(filter TaskFilter) ([]Task, error)
 	GetByID(id int) (Task, error)
 	Add(title string) (Task, error)
 	Update(id int, request UpdateTaskRequest) (Task, error)
@@ -109,15 +115,15 @@ func (s *SQLiteTaskStore) Add(title string) (Task, error) {
 	return Task{ID: int(id), Title: title, Done: false}, nil
 }
 
-func appendIfMatchesFilter(tasks []Task, task Task, done *bool) []Task {
-	if done != nil && *done != task.Done {
+func appendIfMatchesFilter(tasks []Task, task Task, taskFilter TaskFilter) []Task {
+	if taskFilter.Done != nil && *taskFilter.Done != task.Done {
 		return tasks
 	}
 
 	return append(tasks, task)
 }
 
-func (s *SQLiteTaskStore) GetAll(done *bool) ([]Task, error) {
+func (s *SQLiteTaskStore) GetAll(taskFilter TaskFilter) ([]Task, error) {
 	rows, err := s.db.Query("SELECT id, title, done FROM tasks")
 	if err != nil {
 		return nil, err
@@ -138,7 +144,7 @@ func (s *SQLiteTaskStore) GetAll(done *bool) ([]Task, error) {
 			return nil, err
 		}
 
-		tasks = appendIfMatchesFilter(tasks, task, done)
+		tasks = appendIfMatchesFilter(tasks, task, taskFilter)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -255,14 +261,14 @@ func (s *MemoryTaskStore) Add(title string) (Task, error) {
 	return task, nil
 }
 
-func (s *MemoryTaskStore) GetAll(done *bool) ([]Task, error) {
+func (s *MemoryTaskStore) GetAll(taskFiler TaskFilter) ([]Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	var tasks []Task
 
 	for _, task := range s.tasks {
-		if done != nil && task.Done != *done {
+		if taskFiler.Done != nil && task.Done != *taskFiler.Done {
 			continue
 		}
 
