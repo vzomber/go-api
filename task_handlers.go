@@ -197,6 +197,11 @@ func getTasksHandler(store TaskStore) http.HandlerFunc {
 			taskFilter.Limit = &limit
 		}
 
+		searchParam := r.URL.Query().Get("search")
+		if searchParam != "" {
+			taskFilter.Search = &searchParam
+		}
+
 		tasks, err := store.GetAll(taskFilter)
 		if err != nil {
 			log.Println("could not get tasks: ", err)

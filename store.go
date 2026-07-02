@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"strings"
 	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -13,6 +14,7 @@ type TaskFilter struct {
 	Done   *bool
 	Limit  *int
 	Offset *int
+	Search *string
 }
 
 type TaskStore interface {
@@ -115,9 +117,18 @@ func (s *SQLiteTaskStore) Add(title string) (Task, error) {
 	return Task{ID: int(id), Title: title, Done: false}, nil
 }
 
-func appendIfMatchesFilter(tasks []Task, task Task, done *bool) []Task {
-	if done != nil && *done != task.Done {
+func appendIfMatchesFilter(tasks []Task, task Task, filter TaskFilter) []Task {
+	if filter.Done != nil && *filter.Done != task.Done {
 		return tasks
+	}
+
+	if filter.Search != nil {
+		taskTitle := strings.ToLower(task.Title)
+		search := strings.ToLower(*filter.Search)
+
+		if !strings.Contains(taskTitle, search) {
+			return tasks
+		}
 	}
 
 	return append(tasks, task)
@@ -166,7 +177,7 @@ func (s *SQLiteTaskStore) GetAll(taskFilter TaskFilter) ([]Task, error) {
 			return nil, err
 		}
 
-		tasks = appendIfMatchesFilter(tasks, task, taskFilter.Done)
+		tasks = appendIfMatchesFilter(tasks, task, taskFilter)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -294,6 +305,15 @@ func (s *MemoryTaskStore) GetAll(taskFilter TaskFilter) ([]Task, error) {
 	for _, task := range s.tasks {
 		if taskFilter.Done != nil && task.Done != *taskFilter.Done {
 			continue
+		}
+
+		if taskFilter.Search != nil {
+			taskTitle := strings.ToLower(task.Title)
+			search := strings.ToLower(*taskFilter.Search)
+
+			if !strings.Contains(taskTitle, search) {
+				continue
+			}
 		}
 
 		tasks = append(tasks, task)

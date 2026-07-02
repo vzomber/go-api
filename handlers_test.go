@@ -517,3 +517,30 @@ func TestGetTasksHandlerInvalidOffset(t *testing.T) {
 		t.Fatalf("expected 400, got %d", rr.Code)
 	}
 }
+
+func TestGetTasksHandlerSearch(t *testing.T) {
+	store := NewMemoryTaskStore([]Task{
+		{ID: 1, Title: "Get milk", Done: false},
+		{ID: 2, Title: "Sell PS5", Done: false},
+		{ID: 3, Title: "Buy MILK chocolate", Done: false},
+	})
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/tasks?search=milk", nil)
+
+	handler := getTasksHandler(store)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+
+	var tasks []Task
+	if err := json.NewDecoder(rr.Body).Decode(&tasks); err != nil {
+		t.Fatalf("expected valid JSON, got %v", err)
+	}
+
+	if len(tasks) != 2 {
+		t.Fatalf("expected 2 tasks, got %d", len(tasks))
+	}
+}

@@ -336,3 +336,50 @@ func TestMemoryTaskStoreGetAllWithPagination(t *testing.T) {
 		}
 	})
 }
+
+func TestMemoryTaskStoreGetAllSearch(t *testing.T) {
+	store := NewMemoryTaskStore([]Task{
+		{ID: 1, Title: "Get milk", Done: false},
+		{ID: 2, Title: "Sell PS5", Done: false},
+		{ID: 3, Title: "Buy MILK chocolate", Done: false},
+	})
+
+	t.Run("matches by title", func(t *testing.T) {
+		search := "milk"
+
+		tasks, err := store.GetAll(TaskFilter{Search: &search})
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+
+		if len(tasks) != 2 {
+			t.Fatalf("expected 2 tasks, got %d", len(tasks))
+		}
+	})
+
+	t.Run("is case-insensitive", func(t *testing.T) {
+		search := "MILK"
+
+		tasks, err := store.GetAll(TaskFilter{Search: &search})
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+
+		if len(tasks) != 2 {
+			t.Fatalf("expected 2 tasks, got %d", len(tasks))
+		}
+	})
+
+	t.Run("returns empty when no match", func(t *testing.T) {
+		search := "unknown"
+
+		tasks, err := store.GetAll(TaskFilter{Search: &search})
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+
+		if len(tasks) != 0 {
+			t.Fatalf("expected 0 tasks, got %d", len(tasks))
+		}
+	})
+}

@@ -250,3 +250,61 @@ func TestSQLiteTaskStoreGetAllWithPagination(t *testing.T) {
 		}
 	})
 }
+
+func TestSQLiteTaskStoreGetAllSearch(t *testing.T) {
+	store := setupSQLiteTestStore(t)
+
+	_, err := store.Add("Get milk")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	_, err = store.Add("Sell PS5")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	_, err = store.Add("Buy MILK chocolate")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	t.Run("matches by title", func(t *testing.T) {
+		search := "milk"
+
+		tasks, err := store.GetAll(TaskFilter{Search: &search})
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+
+		if len(tasks) != 2 {
+			t.Fatalf("expected 2 tasks, got %d", len(tasks))
+		}
+	})
+
+	t.Run("is case-insensitive", func(t *testing.T) {
+		search := "MILK"
+
+		tasks, err := store.GetAll(TaskFilter{Search: &search})
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+
+		if len(tasks) != 2 {
+			t.Fatalf("expected 2 tasks, got %d", len(tasks))
+		}
+	})
+
+	t.Run("returns empty when no match", func(t *testing.T) {
+		search := "unknown"
+
+		tasks, err := store.GetAll(TaskFilter{Search: &search})
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+
+		if len(tasks) != 0 {
+			t.Fatalf("expected 0 tasks, got %d", len(tasks))
+		}
+	})
+}
